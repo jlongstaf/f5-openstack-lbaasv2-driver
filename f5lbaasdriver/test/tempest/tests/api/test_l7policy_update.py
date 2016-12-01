@@ -14,7 +14,10 @@ u"""F5 Networks® LBaaSv2 L7 policy rules tempest tests."""
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
+import time
+
 from tempest import config
+from tempest.lib import exceptions
 from tempest.lib.common.utils import data_utils
 from tempest import test
 
@@ -66,11 +69,41 @@ class L7PolicyRulesTestJSON(base.BaseTestCase):
 
         cls.partition = 'Project_' + cls.subnet['tenant_id']
         cls.vs_name = 'Project_' + cls.listener_id
+
+        # create BigIp client for validating BIG-IP configuration
         cls.bigip = BigIpClient()
+
+         # get an RPC client for checking driver service object
+        cls.client = cls.plugin_rpc.get_client()
+        cls.context = cls.plugin_rpc.get_context()
 
     @classmethod
     def resource_cleanup(cls):
         super(L7PolicyRulesTestJSON, cls).resource_cleanup()
+
+    def wait_for_active(self, obj_type, id):
+        interval_time = 1
+        timeout = 10
+        end_time = time.time() + timeout
+        status = ""
+        while time.time() < end_time:
+            # get service object from driver
+            res = self.client.call(self.context,
+                                   "get_service_by_loadbalancer_id",
+                                   loadbalancer_id=self.load_balancer_id)
+
+            for obj in res[obj_type]:
+                if (obj['id'] == id):
+                    status = obj['provisioning_status']
+                    if status == 'ACTIVE':
+                        return
+                    break
+            time.sleep(interval_time)
+
+        raise exceptions.TimeoutException(
+            "Instance of {0} failed to go ACTIVE. Status is {1}".format(
+                obj_type, status))
+
 
     def check_policy(self, policy='wrapper_policy'):
         assert self.bigip.policy_exists(policy, partition=self.partition)
@@ -122,10 +155,12 @@ class L7PolicyRulesTestJSON(base.BaseTestCase):
             **create_l7policy_rule_kwargs)
         policy_id = policy['id']
         self.addCleanup(self._delete_l7policy, policy_id)
+        self.wait_for_active("l7policies", policy_id)
 
         rule = self._create_l7rule(
             policy_id, type='PATH', compare_type='STARTS_WITH', value='/api')
         self.addCleanup(self._delete_l7rule, policy_id, rule['id'])
+        self.wait_for_active("l7policy_rules", rule['id'])
 
         self.check_policy()
         self.check_rule(
@@ -266,10 +301,12 @@ class L7PolicyRulesTestJSON(base.BaseTestCase):
             **create_l7policy_rule_kwargs)
         policy_id = policy['id']
         self.addCleanup(self._delete_l7policy, policy_id)
+        self.wait_for_active("l7policies", policy_id)
 
         rule = self._create_l7rule(
             policy_id, type='PATH', compare_type='STARTS_WITH', value='/api')
         rule_id = rule['id']
+        self.wait_for_active("l7policy_rules", rule_id)
 
         self.check_policy()
         self.check_rule('reject_1', action='REJECT', condition='startsWith',
@@ -278,6 +315,7 @@ class L7PolicyRulesTestJSON(base.BaseTestCase):
 
         # remove rule and expect policy removed from BIG-IP
         self._delete_l7rule(policy_id, rule_id, wait=True)
+        time.sleep(60)
         assert not self.bigip.policy_exists(
             'wrapper_policy', partition=self.partition)
         assert not self.bigip.virtual_server_has_policy(

@@ -184,6 +184,7 @@ class L7PolicyJSONReject(L7PolicyTestJSONBasic):
                                              "reject_1",
                                              "Project_" +
                                              self.project_tenant_id)
+
         assert self.bigip_client.rule_has_condition("wrapper_policy",
                                                     "reject_1",
                                                     "contains",

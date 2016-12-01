@@ -16,8 +16,8 @@ u"""F5 Networks® LBaaSv2 L7 policy rules tempest tests."""
 import time
 
 from tempest import config
-from tempest.lib import exceptions
 from tempest.lib.common.utils import data_utils
+from tempest.lib import exceptions
 from tempest import test
 
 from f5lbaasdriver.test.tempest.services.clients.bigip_client import \
@@ -81,7 +81,6 @@ class ListenerTestJSON(base.BaseTestCase):
                         return
                     break
             time.sleep(interval_time)
-
 
         raise exceptions.TimeoutException(
             "Instance of {0} failed to go ACTIVE. Status is {1}".format(

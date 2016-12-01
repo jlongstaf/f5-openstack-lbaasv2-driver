@@ -115,3 +115,34 @@ class PoolTestJSON(base.BaseTestCase):
         self.assertEqual(0, len(res['pools']))
         for listener in res['listeners']:
             self.assertIsNone(listener['default_pool_id'])
+
+    @test.attr(type='smoke')
+    def test_delete_pool_and_members(self):
+        # create listener
+        listener_kwargs = {'loadbalancer_id': self.load_balancer_id,
+                           'protocol': 'HTTP',
+                           'protocol_port': 80}
+        listener = self._create_listener(**listener_kwargs)
+        self.addCleanup(self._delete_listener, listener['id'])
+
+
+        # create pool for listener
+        pool_kwargs = {'listener': listener['id'],
+                       'protocol': 'HTTP',
+                       'lb_algorithm': 'ROUND_ROBIN'}
+
+        pool = self._create_pool(**pool_kwargs)
+
+        # add memebers to pool
+        member_kwargs = {'address': '10.2.2.3',
+                       'protocol_port': 8080,
+                       'subnet': 'mgmt_v4_subnet'}
+        member = self._create_member(pool['id]'])
+        self.addCleanup(self._delete_member(pool['id'], member['id']))
+
+        # delete pool
+        self._delete_pool(pool['id'], wait=True)
+
+        # verify members and nodes are deleted
+
+
