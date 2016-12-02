@@ -169,6 +169,8 @@ class L7PolicyRulesTestJSON(base.BaseTestCase):
             condition='startsWith', value='/api')
         self.check_virtual_server()
 
+        time.sleep(60)
+
     @test.attr(type='smoke')
     def test_create_two_policies(self):
         # Create basic args for policy creation
