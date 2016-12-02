@@ -180,7 +180,7 @@ class ListenerTestJSON(base.BaseTestCase):
         vs_name = 'Project_' + str(listener['id'])
         assert self.bigip.virtual_server_exists(vs_name, self.partition)
 
-        # check profiles
+        # check profiles -- should have fastL4 but not http and oneconnect
         assert self.bigip.virtual_server_has_profile(
             vs_name, 'fastL4', self.partition)
 
@@ -199,14 +199,14 @@ class ListenerTestJSON(base.BaseTestCase):
         self.addCleanup(self._delete_pool, pool['id'])
         self.wait_for_active('pools', pool['id'])
 
-        # still expect fastl4
-        assert self.bigip.virtual_server_has_profile(
+        # fastL4 should have been removed
+        assert not self.bigip.virtual_server_has_profile(
             vs_name, 'fastL4', self.partition)
 
-        # now expect http profile was added
+        # expect http profile added
         assert self.bigip.virtual_server_has_profile(
             vs_name, 'http', self.partition)
 
-        # still do not expect oneconnect
-        assert not self.bigip.virtual_server_has_profile(
+        # expect oneconnect added
+        assert self.bigip.virtual_server_has_profile(
             vs_name, 'oneconnect', self.partition)
