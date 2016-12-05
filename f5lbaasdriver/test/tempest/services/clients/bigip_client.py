@@ -161,6 +161,8 @@ class BigIpClient(object):
 
             profiles = vs.profiles_s.get_collection()
             for profile in profiles:
+                print "@@@@@@@@@@@@@@@@@@@@"
+                print profile.name
                 if profile.name == profile_name:
                     return True
 

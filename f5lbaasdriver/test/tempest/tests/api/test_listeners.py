@@ -165,54 +165,7 @@ class ListenerTestJSON(base.BaseTestCase):
             vs_name, 'oneconnect', self.partition)
 
     @test.attr(type='smoke')
-    def test_add_tcp_session_persistence(self):
-        # Create listener
-        listener_kwargs = {'loadbalancer_id': self.load_balancer_id,
-                           'protocol': 'TCP',
-                           'protocol_port': '8443'}
-        listener = self._create_listener(**listener_kwargs)
-        self.addCleanup(self._delete_listener, listener['id'])
-
-        # expect listener to go 'ACTIVE'
-        self.wait_for_active('listeners', listener['id'])
-
-        # check vs created
-        vs_name = 'Project_' + str(listener['id'])
-        assert self.bigip.virtual_server_exists(vs_name, self.partition)
-
-        # check profiles -- should have fastL4 but not http and oneconnect
-        assert self.bigip.virtual_server_has_profile(
-            vs_name, 'fastL4', self.partition)
-
-        assert not self.bigip.virtual_server_has_profile(
-            vs_name, 'http', self.partition)
-
-        assert not self.bigip.virtual_server_has_profile(
-            vs_name, 'oneconnect', self.partition)
-
-        # attach pool with session persistence
-        pool_kwargs = {'listener_id': listener['id'],
-                       'protocol': 'TCP',
-                       'lb_algorithm': 'ROUND_ROBIN',
-                       'session_persistence': {'type': 'HTTP_COOKIE'}}
-        pool = self._create_pool(**pool_kwargs)
-        self.addCleanup(self._delete_pool, pool['id'])
-        self.wait_for_active('pools', pool['id'])
-
-        # fastL4 should have been removed
-        assert not self.bigip.virtual_server_has_profile(
-            vs_name, 'fastL4', self.partition)
-
-        # expect http profile added
-        assert self.bigip.virtual_server_has_profile(
-            vs_name, 'http', self.partition)
-
-        # expect oneconnect added
-        assert self.bigip.virtual_server_has_profile(
-            vs_name, 'oneconnect', self.partition)
-
-    @test.attr(type='smoke')
-    def test_remove_tcp_session_persistence(self):
+    def test_tcp_session_persistence(self):
         # Create listener
         listener_kwargs = {'loadbalancer_id': self.load_balancer_id,
                            'protocol': 'TCP',
@@ -245,7 +198,64 @@ class ListenerTestJSON(base.BaseTestCase):
         pool = self._create_pool(**pool_kwargs)
         self.wait_for_active('pools', pool['id'])
 
-        # fastL4 should have been removed
+        # expect http profile added
+        assert self.bigip.virtual_server_has_profile(
+            vs_name, 'http', self.partition)
+
+        assert self.bigip.virtual_server_has_profile(
+            vs_name, 'oneconnect', self.partition)
+
+        # remove pool which removes session persistence from VS
+        self._delete_pool(pool['id'], wait=True)
+
+        #time.sleep(60)
+
+        assert not self.bigip.virtual_server_has_profile(
+            vs_name, 'http', self.partition)
+
+        # check profiles
+        assert not self.bigip.virtual_server_has_profile(
+            vs_name, 'oneconnect', self.partition)
+
+        assert self.bigip.virtual_server_has_profile(
+            vs_name, 'fastL4', self.partition)
+
+
+    @test.attr(type='smoke')
+    def test_http_session_persistence(self):
+        # Create listener
+        listener_kwargs = {'loadbalancer_id': self.load_balancer_id,
+                           'protocol': 'HTTP',
+                           'protocol_port': '8080'}
+        listener = self._create_listener(**listener_kwargs)
+        self.addCleanup(self._delete_listener, listener['id'])
+
+        # expect listener to go 'ACTIVE'
+        self.wait_for_active('listeners', listener['id'])
+
+        # check vs created
+        vs_name = 'Project_' + str(listener['id'])
+        assert self.bigip.virtual_server_exists(vs_name, self.partition)
+
+        # check profiles before creating pool
+        assert not self.bigip.virtual_server_has_profile(
+            vs_name, 'fastL4', self.partition)
+
+        assert self.bigip.virtual_server_has_profile(
+            vs_name, 'http', self.partition)
+
+        assert self.bigip.virtual_server_has_profile(
+            vs_name, 'oneconnect', self.partition)
+
+        # attach pool with session persistence
+        pool_kwargs = {'listener_id': listener['id'],
+                       'protocol': 'HTTP',
+                       'lb_algorithm': 'ROUND_ROBIN',
+                       'session_persistence': {'type': 'HTTP_COOKIE'}}
+        pool = self._create_pool(**pool_kwargs)
+        self.wait_for_active('pools', pool['id'])
+
+        # check profiles after creating pool
         assert not self.bigip.virtual_server_has_profile(
             vs_name, 'fastL4', self.partition)
 
@@ -260,12 +270,13 @@ class ListenerTestJSON(base.BaseTestCase):
         # remove pool which removes session persistence from VS
         self._delete_pool(pool['id'], wait=True)
 
-        # check profiles -- should be back to fastL4
-        assert self.bigip.virtual_server_has_profile(
+        # check profiles after deleting pool
+        assert not self.bigip.virtual_server_has_profile(
             vs_name, 'fastL4', self.partition)
 
-        assert not self.bigip.virtual_server_has_profile(
+        assert self.bigip.virtual_server_has_profile(
             vs_name, 'http', self.partition)
 
-        assert not self.bigip.virtual_server_has_profile(
+        assert self.bigip.virtual_server_has_profile(
             vs_name, 'oneconnect', self.partition)
+
