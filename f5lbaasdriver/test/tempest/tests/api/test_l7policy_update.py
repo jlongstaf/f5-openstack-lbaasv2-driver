@@ -169,8 +169,6 @@ class L7PolicyRulesTestJSON(base.BaseTestCase):
             condition='startsWith', value='/api')
         self.check_virtual_server()
 
-        time.sleep(60)
-
     @test.attr(type='smoke')
     def test_create_two_policies(self):
         # Create basic args for policy creation
@@ -317,7 +315,7 @@ class L7PolicyRulesTestJSON(base.BaseTestCase):
 
         # remove rule and expect policy removed from BIG-IP
         self._delete_l7rule(policy_id, rule_id, wait=True)
-        time.sleep(60)
+
         assert not self.bigip.policy_exists(
             'wrapper_policy', partition=self.partition)
         assert not self.bigip.virtual_server_has_policy(
