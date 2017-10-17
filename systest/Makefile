@@ -14,7 +14,7 @@
 #
 
 # Fixing branch to that specified in the public fork. This is necessary for build on PRs.
-export BRANCH := stable/newton
+export BRANCH := stable/ocata
 export AGENTCOVERAGEDIR := ${AGENTCOVERAGEDIR}
 export GIT_REMOTE_URL := $(shell git config --get remote.origin.url)
 # The below operations are used for the builds on PR. The two variables are defined by the
@@ -28,7 +28,7 @@ export DRIVER_PIP_INSTALL_LOCATION := git+$(ghprbAuthorRepoGitUrl)@$(ghprbActual
 # OR it may contain '-eol' after it for the eol tag.
 # To allow this type of branch name and any other to work with the cloud deployment
 # and with Jenkins, we should strip out the forward slash, leaving something like:
-# stable/newton -> stablenewton
+# stable/ocata -> stableocata
 SANITIZED_BRANCH := $(subst /,,$(BRANCH))
 SUBJECTCODE_ID := $(shell git log -n 1 --format=%h)
 TIMESTAMP ?= $(shell date +"%Y%m%d-%H%M%S")
@@ -54,14 +54,14 @@ export TEMPEST_REPO := http://git.openstack.org/openstack/tempest
 export NEUTRON_LBAAS_DIR := /home/jenkins/neutron-lbaas
 export NEUTRON_LBAAS_REPO := https://github.com/F5Networks/neutron-lbaas.git
 
-export NEUTRON_LBAAS_BRANCH := stable/newton
+export NEUTRON_LBAAS_BRANCH := stable/ocata
 export UPPER_CONSTRAINTS_FILE := https://git.openstack.org/cgit/openstack/requirements/plain/upper-constraints.txt?h=$(NEUTRON_LBAAS_BRANCH)
 
 # TLC path and python path requirements
 export PATH := /tools/bin:$(PATH)
 export PYTHONPATH := /tools/lib:/tools/bin:$(PYTHONPATH)
 export USER := jenkins
-export TEST_OPENSTACK_DISTRO := newton
+export TEST_OPENSTACK_DISTRO := ocata
 export TEST_CIRROS_IMAGE := cirros-0.3.4-x86_64-disk.qcow2
 export TEST_OPENSTACK_NODE_COUNT := 3
 export TEST_OPENSTACK_DEPLOY := multinode
