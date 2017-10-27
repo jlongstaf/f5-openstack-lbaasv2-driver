@@ -51,7 +51,7 @@ class DisconnectedService(object):
             agent_configuration.get('tunnel_types', [])
         ]
         # look up segment details in the ml2_network_segments table
-        segments = segments_db.get_network_segments(context.session,
+        segments = segments_db.get_network_segments(context,
                                                     network['id'],
                                                     filter_dynamic=None)
 
