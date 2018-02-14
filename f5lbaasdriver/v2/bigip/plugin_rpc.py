@@ -542,6 +542,7 @@ class LBaaSv2PluginCallbacksRPC(object):
                 port_data[portbindings.VNIC_TYPE] = vnic_type
                 port_data[portbindings.PROFILE] = binding_profile
 
+                port_data['binding:capabilities'] = {'port_filter': False}
                 port = self.driver.plugin.db._core_plugin.create_port(
                     context, {'port': port_data})
                 # Because ML2 marks ports DOWN by default on creation
@@ -702,6 +703,7 @@ class LBaaSv2PluginCallbacksRPC(object):
             port_data[portbindings.VNIC_TYPE] = vnic_type
             port_data[portbindings.PROFILE] = binding_profile
 
+            port_data['binding:capabilities'] = {'port_filter': False}
             port = self.driver.plugin.db._core_plugin.create_port(
                 context, {'port': port_data})
             # Because ML2 marks ports DOWN by default on creation
